@@ -53,9 +53,9 @@ class Cross {
 		}
 		else return 'e';
 	}
-	public char nextDirection(int now) {
-		return this.nextDirection(now, -2);
+
+	public boolean equals(Cross c) {
+		return this.id == c.id;
 	}
-	
 }
 

@@ -74,7 +74,8 @@ class Map{
 					tempLine = reader.readLine();
 					continue;
 				}
-				temp = new Road(deal(tempLine));
+				int [] tempLineArray = deal(tempLine);
+				temp = new Road(tempLineArray,crosses.get(tempLineArray[4]),crosses.get(tempLineArray[5]));
 				this.roads.put(temp.id,temp);
 				tempLine = reader.readLine();
 			}
@@ -94,7 +95,8 @@ class Map{
 					tempLine = reader.readLine();
 					continue;
 				}
-				temp = new Car(deal(tempLine));
+				int [] tempLineInArray = deal(tempLine);
+				temp = new Car(tempLineInArray,crosses.get(tempLineInArray[1]),crosses.get(tempLineInArray[2]));
 				this.cars.put(temp.id,temp);
 				this.notMoved.add(temp);
 				tempLine = reader.readLine();

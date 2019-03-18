@@ -10,11 +10,14 @@ class Road {
 	//道路id，道路长度，道路速度限制，道路的条数，道路的出发路口，道路的结束路口， 道路是否为双向，当前道路上的车数
 	int id, length, speedLimit, laneNum, begin, end, isDouble,carNum;
 	
+	//开始的路口
+	Cross beginCross,endCross;
+	
 	//表明每个车道上的车的情况，从起点到终点的方向上，从1开始编号且不重复
 	ArrayList<ArrayDeque<Car>> roadStatus;
 
 	//初始化道路信息
-	public Road(int[] init) {
+	public Road(int[] init,Cross c1,Cross c2) {
 		this.id = init[0];
 		this.length = init[1];
 		this.speedLimit = init[2];
@@ -29,9 +32,14 @@ class Road {
 			ArrayDeque<Car> tempLane = new ArrayDeque<Car>();
 			roadStatus.add(tempLane);
 		}
+		this.beginCross = c1;
+		this.endCross = c2;
 	}
 	public Road() {
 		this.id = -1;
 	}
-
+	
+	public boolean equals(Road r) {
+		return this.id == r.id;
+	}
 }
