@@ -142,40 +142,43 @@ class Map{
 		}
 		return ans;
 	}	
-//	//判断是否完成调度
-//	public int isFinished() {
-//		if (this.Arrived.size()==carTotal) {
-//			return 
-//		}
-//	}
+
 	
-	
-	//车辆从车库出发
-	public void startMove() {
-		for(Car tempCar:notMoved) {
-			if(tempCar.startMoveTime == this.time) {
-				
-			}
-			
-		}
-	}
-	
-	//首先处理每条道路
+	//首先处理每条道路，对车辆进行标记
 	public void markCars() {
 		for(int i:roads.keySet()) {
-			Road tempRoad = roads.get(i);
-			if(tempRoad.carNum == 0) {
+			Road nowRoad = roads.get(i);
+			if(nowRoad.carNum == 0) {
 				continue;
 			}
-			for(ArrayDeque<Car> tempLane:tempRoad.roadStatus) {
+			for(ArrayDeque<Car> tempLane:nowRoad.roadStatus) {
 				if(tempLane.size() == 0) {
 					continue;
 				}
 				Iterator<Car> iter = tempLane.iterator();
-				for(Car tempCar:tempLane) {
-					
+				Car frontCar = null,tempCar;
+				boolean count = true;
+				while(iter.hasNext()) {
+					if (count) {
+						frontCar = iter.next();
+						frontCar.markFirstCar();
+						count =false;
+					}
+					else {
+						tempCar = iter.next();
+						tempCar.markFollowCar(frontCar);
+						frontCar = tempCar;
+					}
 				}
 			}
+		}
+	}
+	
+	//标记后处理每一个路口
+	public void moveCars() {
+		for(int i:crosses.keySet()) {
+			Cross nowCross = crosses.get(i);
+			
 		}
 	}
 	

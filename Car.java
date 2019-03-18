@@ -73,6 +73,8 @@ class Car {
 		}		
 	}
 	
+	
+	//重大问题，没有考虑生成回路死锁的状况，标记
 	//车辆过路口，返回是否成功进入路口
 	public boolean passCross(Cross crossToPass) {
 		Road nextRoad = this.ansRoads.get(this.status.nextRoadIndex);
@@ -108,7 +110,7 @@ class Car {
 				this.status.nextRoadIndex = -2;
 			}
 			else {
-				this.status.getNextSpeed(this.ansRoads.get(this.status.nextRoadIndex), this.speedLimit);//低效
+				this.status.nextSpeed = Math.min(this.ansRoads.get(this.status.nextRoadIndex).speedLimit, this.speedLimit);//低效
 			}
 			this.status.actCross = nextRoad.endCross.nextDirection(this.status.nowRoadIndex, this.status.nextRoadIndex);
 			tempLane.add(this);
@@ -117,15 +119,49 @@ class Car {
 		}
 		return false;
 	}
+		
+	//移动在车库的车辆
+	public boolean moveCarInRoom() {
+		Road nextRoad = this.ansRoads.get(this.status.nowRoadIndex);
+		this.status.nowSpeed = Math.min(this.speedLimit, nextRoad.speedLimit);
+		this.status.SV2 = this.status.nowSpeed;
+		int base;
+		if(nextRoad.beginCross.equals(this.departCross)) {
+			base = 0;
+		}
+		else {
+			base = nextRoad.laneNum;
+		}
+		for(int i =base;i<base+nextRoad.laneNum;i++) {
+			ArrayDeque<Car> tempLane = nextRoad.roadStatus.get(i);
+			if(!tempLane.isEmpty()) {
+				int rest = tempLane.getLast().status.location-1;
+				//如果放不进去
+				if(rest==0) {
+					continue;
+				}
+				//如果能放进去
+				else {
+					this.status.location = rest<this.status.SV2?rest:this.status.SV2;
+				}
+			}
+			//更新驶入新的车道后车的状态已经驶出和驶入的两个车道的信息。
+			this.status.isTermination = true;
+			this.status.laneNum = i;
+			if(this.status.nextRoadIndex>=this.ansRoads.size()) {
+				this.status.nextRoadIndex = -2;
+			}
+			else {
+				this.status.nextSpeed = Math.min(this.ansRoads.get(this.status.nextRoadIndex).speedLimit, this.speedLimit);//低效
+			}
+			this.status.actCross = nextRoad.endCross.nextDirection(this.status.nowRoadIndex, this.status.nextRoadIndex);
+			tempLane.add(this);
+			this.ansRoads.get(this.status.nowRoadIndex).carNum++;
+			return true;
+		}
+		return false;	
+	}
 	
-	
-//	//移动在车库的车辆
-//	public void moveCarInRoom() {
-//		this.status.notMoved = false;
-//		this.status.nextRoadIndex++;
-//		this.status.startCross = this.departCross;
-//		this.status.getSpeed(ansRoads.get(this.status.nowRoadIndex),ansRoads.get(this.status.nextRoadIndex), this.speedLimit);		
-//	}
 	public boolean equals(Car c) {
 		return this.id == c.id;
 	}
@@ -164,15 +200,9 @@ class CarStatus{
 		this.notMoved = true;
 		this.arrived = false;
 		this.isTermination = true;
-//		this.startCross = tempCross;
 		this.nowRoadIndex =0;
 		this.nextRoadIndex = 0;
 		this.location = 0;
-	}
-	
-	//更新当前路上的速度以及下条路上的速度
-	public void getNextSpeed(Road nextRoad,int carSpeedLimit) {
-		this.nextSpeed = Math.min(nextRoad.speedLimit, carSpeedLimit);
 	}
 
 }
