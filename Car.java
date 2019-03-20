@@ -15,6 +15,7 @@ class Car {
 	int startMoveTime;
 	ArrayList<Road> ansRoads;
 	
+	int arrivedTime;
 	//车辆当前的状态
 	CarStatus status;
 	
@@ -28,10 +29,11 @@ class Car {
 		this.departCross = c1;
 		this.arriveCross = c2;
 		this.status= new CarStatus(this.departCross);
+		this.ansRoads=new ArrayList<Road>();
 	}
 	
 	//标记在路上每条车道的第一辆车
-	public void markFirstCar() {
+	public boolean markFirstCar(boolean flag) {
 		int SV1 = this.status.nowSpeed;
 		int SV2 = this.status.nextSpeed;
 		int nowRoadLength = this.ansRoads.get(this.status.nowRoadIndex).length;
@@ -41,6 +43,14 @@ class Car {
 			this.status.isTermination = true;
 		}
 		else {
+			if(this.status.actCross == 'a') {
+				return false;
+			}
+			if(!flag) {
+				this.status.isTermination = true;
+				this.status.location = nowRoadLength;
+				return true;
+			}
 			int S2 = SV2-S1;
 			if(S2>0) {
 				this.status.isTermination = false;
@@ -51,6 +61,7 @@ class Car {
 				this.status.location = nowRoadLength;
 			}
 		}
+		return true;
 	}
 	
 	//标记在路上的每条车道的第二辆以及后面的车
@@ -74,9 +85,10 @@ class Car {
 	}
 	
 	
-	//重大问题，没有考虑生成回路死锁的状况，标记
-	//车辆过路口，返回是否成功进入路口
-	public boolean passCross(Cross crossToPass) {
+	//重大问题，没有考虑生成回路死锁的状况
+	//车辆过路口，返回是否成功进入路口，前提是已经判断可以行动，即没有其他路口车辆限制
+	//传入路口参数是不合理的
+	public boolean passCross(Cross crossToPass) { 
 		Road nextRoad = this.ansRoads.get(this.status.nextRoadIndex);
 		int base;
 		if(nextRoad.beginCross.equals(crossToPass)) {
@@ -171,14 +183,11 @@ class Car {
 //描述当前车辆的状态
 class CarStatus{
 	
-	//当前车辆是否出发和到达
-	boolean notMoved,arrived;
+//	//当前车辆是否出发和到达
+//	boolean notMoved,arrived;
 	
 	//车辆当前的状态，终止和非终止
 	boolean isTermination;
-	
-//	//当前车辆所在的路以及进入当前路段的路口
-//	Cross startCross;
 	
 	//车辆当前和下一个路
 	int nowRoadIndex,nextRoadIndex;
@@ -197,8 +206,8 @@ class CarStatus{
 	
 	//初始化车辆状态为-1
 	public CarStatus(Cross tempCross) {
-		this.notMoved = true;
-		this.arrived = false;
+//		this.notMoved = true;
+//		this.arrived = false;
 		this.isTermination = true;
 		this.nowRoadIndex =0;
 		this.nextRoadIndex = 0;

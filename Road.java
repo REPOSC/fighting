@@ -17,7 +17,7 @@ class Road {
 	ArrayList<ArrayDeque<Car>> roadStatus;
 
 	//初始化道路信息
-	public Road(int[] init,Cross c1,Cross c2) {
+	public Road(int[] init) {
 		this.id = init[0];
 		this.length = init[1];
 		this.speedLimit = init[2];
@@ -32,14 +32,46 @@ class Road {
 			ArrayDeque<Car> tempLane = new ArrayDeque<Car>();
 			roadStatus.add(tempLane);
 		}
-		this.beginCross = c1;
-		this.endCross = c2;
 	}
 	public Road() {
 		this.id = -1;
 	}
 	
+	//将cross对象传进来
+	public void getCross(Cross begin,Cross end) {
+		this.beginCross = begin;
+		this.endCross = end;
+	}
+	
+	//取得每条路准备经过传入路口的下一辆车
+	public Car getNextCar(Cross nowCross) {
+		int base;
+		if(nowCross == this.beginCross) {
+			base = 0;
+		}
+		else {
+			base = this.laneNum/2;
+		}
+		for(int i=base;i<base+this.laneNum/2;i++) {
+			for(Car tempCar:this.roadStatus.get(i)) {
+				if(tempCar.status.isTermination==false) {
+					return tempCar;
+				}
+				else {
+					break;
+				}
+			}
+		}
+		return null;
+	}
+	
 	public boolean equals(Road r) {
 		return this.id == r.id;
+	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return String.valueOf(id)+" "+ length+" "+ speedLimit+" "+  laneNum+" "+  begin+" "+  end+" "+  isDouble + " "+ carNum;
 	}
 }
