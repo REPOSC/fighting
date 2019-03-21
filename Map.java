@@ -7,9 +7,12 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 class Map{
 	//路口集合，道路集合，车辆集合，未出发的车辆集合和已经到达目的地的车辆集合，时间片，各种信息的总数。
@@ -29,7 +32,7 @@ class Map{
 		this.initCar(carfile);
 		this.time = 0;	
 		this.carTotal = this.cars.size();
-		for(int i:this.roads.keySet()) {
+		for(int i:sortIndex(this.roads.keySet())) {
 			Road tempRoad = this.roads.get(i);
 			tempRoad.getCross(this.crosses.get(tempRoad.begin), this.crosses.get(tempRoad.end));
 		}
@@ -154,11 +157,30 @@ class Map{
 	//运行
 	public int run() {
 		this.moveCarsInRoom();
+		this.time++;
+		boolean stillRoom = true;
 		while(this.arrived.size()<this.carTotal) {
+//			System.out.println(this.time + " "+this.arrived.size());
 			this.markCars();
+//			for(int tempCar:sortIndex(this.cars.keySet())) {
+//				System.out.println(tempCar+" "+cars.get(tempCar));
+//			}
+//			System.out.println();
 			this.moveCarsOnRoad();
+//			for(int tempCar:sortIndex(this.cars.keySet())) {
+//				System.out.println(tempCar+" "+cars.get(tempCar));
+//			}
+//			System.out.println();
+			if(stillRoom) {
+				stillRoom=this.moveCarsInRoom();
+			}
 			this.moveCarsInRoom();
+//			for(int tempCar:sortIndex(this.cars.keySet())) {
+//				System.out.println(tempCar+" "+cars.get(tempCar));
+//			}
+			this.time++;
 		}
+		System.out.println("调度结束时间为： "+time);
 		int ans=0;
 		for(Car oneCar:this.arrived) {
 			ans+=(oneCar.arrivedTime-oneCar.startMoveTime);
@@ -182,6 +204,7 @@ class Map{
 				}
 				else {
 					this.arrived.add(frontCar);
+					frontCar.arrivedTime = this.time+1;
 				}
 			}
 			else {
@@ -223,10 +246,10 @@ class Map{
 	
 	//首先处理每条道路，对车辆进行标记
 	public void markCars() {
-		for(int i:this.roads.keySet()) {
+		for(int i:sortIndex(this.roads.keySet())) {
 			Road nowRoad = this.roads.get(i);
 			if(nowRoad.carNum == 0) {
-				return;
+				continue;
 			}
 			for(ArrayDeque<Car> tempLane:nowRoad.roadStatus) {
 				this.markSingleLane(tempLane);
@@ -241,7 +264,7 @@ class Map{
 		int roadIndex;
 		int tempLaneNum;
 		boolean judge;
-		for(int crossIndex:this.crosses.keySet()) {
+		for(int crossIndex:sortIndex(this.crosses.keySet())) {
 			Cross nowCross = this.crosses.get(crossIndex);
 			judge = true;
 			boolean [] roadFinished = {false,false,false,false};
@@ -319,7 +342,7 @@ class Map{
 	}
 	
 	//处理未出发的车辆
-	public void moveCarsInRoom() {
+	public boolean moveCarsInRoom() {
 		//假设提供的车辆id为顺序
 		int length = this.notMoved.size();
 		for(int i=0;i<length;i++) {
@@ -332,6 +355,19 @@ class Map{
 				}
 			}
 		}
-		this.time ++;
+		if(this.notMoved.size()>0) {
+			return true;
+		}
+		return false;
 	}
+	
+	public static ArrayList<Integer> sortIndex(Set<Integer> a){
+		ArrayList<Integer> ans=new ArrayList<Integer>();
+		for(int i:a) {
+			ans.add(i);
+		}
+		Collections.sort(ans);
+		return ans;
+	}
+	
 }

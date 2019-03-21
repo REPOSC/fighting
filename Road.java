@@ -47,12 +47,12 @@ class Road {
 	public Car getNextCar(Cross nowCross) {
 		int base;
 		if(nowCross == this.beginCross) {
-			base = 0;
+			base = this.laneNum;
 		}
 		else {
-			base = this.laneNum/2;
+			base = 0;
 		}
-		for(int i=base;i<base+this.laneNum/2;i++) {
+		for(int i=base;i<base+this.laneNum;i++) {
 			for(Car tempCar:this.roadStatus.get(i)) {
 				if(tempCar.status.isTermination==false) {
 					return tempCar;

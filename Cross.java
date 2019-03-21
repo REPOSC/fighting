@@ -23,7 +23,14 @@ class Cross {
 		this.id = id;
 		this.roadNum = roadNum;
 		this.crossRoadsId = roadId;
-		this.originCrossRoads = init;
+		this.originCrossRoads = new ArrayList<Road>();
+		for(int i=0;i<4;i++) {
+			originCrossRoads.add(init.get(i));
+		}
+		this.sortedCrossRoads = new ArrayList<Road>();
+		for(int i=0;i<4;i++) {
+			sortedCrossRoads.add(init.get(i));
+		}
 		this.sortedCrossRoads = init;
 		//把符合调度顺序的路口赋值
 		Collections.sort(sortedCrossRoads,new Comparator<Road>() {
@@ -85,7 +92,7 @@ class Cross {
 	}
 	
 	public static int getPositive(int a) {
-		return a>0?a:a+4;
+		return a>=0?a:a+4;
 	}
 	
 	public boolean equals(Cross c) {

@@ -44,6 +44,8 @@ class Car {
 		}
 		else {
 			if(this.status.actCross == 'a') {
+				this.ansRoads.get(this.status.nowRoadIndex).roadStatus.get(this.status.laneNum).pop();
+				this.status.location = 0;
 				return false;
 			}
 			if(!flag) {
@@ -110,6 +112,9 @@ class Car {
 					this.status.location = rest<this.status.SV2?rest:this.status.SV2;
 				}
 			}
+			else {
+				this.status.location = this.status.SV2;
+			}
 			//更新驶入新的车道后车的状态已经驶出和驶入的两个车道的信息。
 			this.ansRoads.get(this.status.nowRoadIndex).roadStatus.get(this.status.laneNum).pop();
 			this.ansRoads.get(this.status.nowRoadIndex).carNum--;
@@ -120,11 +125,17 @@ class Car {
 			this.status.nowSpeed = this.status.nextSpeed;
 			if(this.status.nextRoadIndex>=this.ansRoads.size()) {
 				this.status.nextRoadIndex = -2;
+				this.status.actCross = 'a';
 			}
 			else {
 				this.status.nextSpeed = Math.min(this.ansRoads.get(this.status.nextRoadIndex).speedLimit, this.speedLimit);//低效
+				if(base==0) {
+					this.status.actCross = nextRoad.endCross.nextDirection(this.ansRoads.get(this.status.nowRoadIndex).id, this.ansRoads.get(this.status.nextRoadIndex).id);
+				}
+				else {
+					this.status.actCross = nextRoad.beginCross.nextDirection(this.ansRoads.get(this.status.nowRoadIndex).id, this.ansRoads.get(this.status.nextRoadIndex).id);	
+				}
 			}
-			this.status.actCross = nextRoad.endCross.nextDirection(this.status.nowRoadIndex, this.status.nextRoadIndex);
 			tempLane.add(this);
 			this.ansRoads.get(this.status.nowRoadIndex).carNum++;
 			return true;
@@ -134,7 +145,7 @@ class Car {
 		
 	//移动在车库的车辆
 	public boolean moveCarInRoom() {
-		Road nextRoad = this.ansRoads.get(this.status.nowRoadIndex);
+		Road nextRoad = this.ansRoads.get(this.status.nextRoadIndex);
 		this.status.nowSpeed = Math.min(this.speedLimit, nextRoad.speedLimit);
 		this.status.SV2 = this.status.nowSpeed;
 		int base;
@@ -157,16 +168,27 @@ class Car {
 					this.status.location = rest<this.status.SV2?rest:this.status.SV2;
 				}
 			}
+			else {
+				this.status.location = this.status.SV2;
+			}
 			//更新驶入新的车道后车的状态已经驶出和驶入的两个车道的信息。
 			this.status.isTermination = true;
 			this.status.laneNum = i;
+			this.status.nextRoadIndex++;
 			if(this.status.nextRoadIndex>=this.ansRoads.size()) {
 				this.status.nextRoadIndex = -2;
+				this.status.actCross = 'a';
+				
 			}
 			else {
 				this.status.nextSpeed = Math.min(this.ansRoads.get(this.status.nextRoadIndex).speedLimit, this.speedLimit);//低效
+				if(base==0) {
+					this.status.actCross = nextRoad.endCross.nextDirection(this.ansRoads.get(this.status.nowRoadIndex).id, this.ansRoads.get(this.status.nextRoadIndex).id);
+				}
+				else {
+					this.status.actCross = nextRoad.beginCross.nextDirection(this.ansRoads.get(this.status.nowRoadIndex).id, this.ansRoads.get(this.status.nextRoadIndex).id);	
+				}
 			}
-			this.status.actCross = nextRoad.endCross.nextDirection(this.status.nowRoadIndex, this.status.nextRoadIndex);
 			tempLane.add(this);
 			this.ansRoads.get(this.status.nowRoadIndex).carNum++;
 			return true;
@@ -176,6 +198,18 @@ class Car {
 	
 	public boolean equals(Car c) {
 		return this.id == c.id;
+	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		if(this.status.nextRoadIndex<0) {
+			return "id: "+this.id+" isterminal: "+this.status.isTermination+" nowRoad: "+this.ansRoads.get(this.status.nowRoadIndex).id+
+					" Lane: "+this.status.laneNum+" Location: "+this.status.location+" nextDirect: "+this.status.actCross+" nextRoad: "+"arrived";
+			
+		}
+		return "id: "+this.id+" isterminal: "+this.status.isTermination+" nowRoad: "+this.ansRoads.get(this.status.nowRoadIndex).id+
+				" Lane: "+this.status.laneNum+" Location: "+this.status.location+" nextDirect: "+this.status.actCross+" nextRoad: "+this.ansRoads.get(this.status.nextRoadIndex).id;
 	}
 }
 
