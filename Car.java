@@ -56,7 +56,7 @@ class Car {
 			int S2 = SV2-S1;
 			if(S2>0) {
 				this.status.isTermination = false;
-				this.status.SV2 = SV2;
+				this.status.S2 = S2;
 			}
 			else{
 				this.status.isTermination = true;
@@ -86,7 +86,6 @@ class Car {
 		}		
 	}
 	
-	
 	//重大问题，没有考虑生成回路死锁的状况
 	//车辆过路口，返回是否成功进入路口，前提是已经判断可以行动，即没有其他路口车辆限制
 	//传入路口参数是不合理的
@@ -109,11 +108,11 @@ class Car {
 				}
 				//如果能放进去
 				else {
-					this.status.location = rest<this.status.SV2?rest:this.status.SV2;
+					this.status.location = rest<this.status.S2?rest:this.status.S2;
 				}
 			}
 			else {
-				this.status.location = this.status.SV2;
+				this.status.location = this.status.S2;
 			}
 			//更新驶入新的车道后车的状态已经驶出和驶入的两个车道的信息。
 			this.ansRoads.get(this.status.nowRoadIndex).roadStatus.get(this.status.laneNum).pop();
@@ -147,7 +146,7 @@ class Car {
 	public boolean moveCarInRoom() {
 		Road nextRoad = this.ansRoads.get(this.status.nextRoadIndex);
 		this.status.nowSpeed = Math.min(this.speedLimit, nextRoad.speedLimit);
-		this.status.SV2 = this.status.nowSpeed;
+		this.status.S2 = this.status.nowSpeed;
 		int base;
 		if(nextRoad.beginCross.equals(this.departCross)) {
 			base = 0;
@@ -165,11 +164,11 @@ class Car {
 				}
 				//如果能放进去
 				else {
-					this.status.location = rest<this.status.SV2?rest:this.status.SV2;
+					this.status.location = rest<this.status.S2?rest:this.status.S2;
 				}
 			}
 			else {
-				this.status.location = this.status.SV2;
+				this.status.location = this.status.S2;
 			}
 			//更新驶入新的车道后车的状态已经驶出和驶入的两个车道的信息。
 			this.status.isTermination = true;
@@ -216,14 +215,11 @@ class Car {
 
 //描述当前车辆的状态
 class CarStatus{
-	
-//	//当前车辆是否出发和到达
-//	boolean notMoved,arrived;
-	
-	//车辆当前的状态，终止和非终止
+		
+	//车辆当前的状态，终止true和等待false
 	boolean isTermination;
 	
-	//车辆当前和下一个路
+	//车辆当前的路在ansRoad的地址和下一个路在ansRoad的地址，大小相差1
 	int nowRoadIndex,nextRoadIndex;
 	
 	//当前的路的第几车道,当前车道的几个单位处
@@ -236,12 +232,10 @@ class CarStatus{
 	char actCross;
 	
 	//当前车辆将要通过路口时下条路上走得距离
-	int SV2;
+	int S2;
 	
 	//初始化车辆状态为-1
 	public CarStatus(Cross tempCross) {
-//		this.notMoved = true;
-//		this.arrived = false;
 		this.isTermination = true;
 		this.nowRoadIndex =0;
 		this.nextRoadIndex = 0;

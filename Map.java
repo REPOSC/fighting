@@ -160,24 +160,24 @@ class Map{
 		this.time++;
 		boolean stillRoom = true;
 		while(this.arrived.size()<this.carTotal) {
-//			System.out.println(this.time + " "+this.arrived.size());
+			System.out.println(this.time + " "+this.arrived.size());
 			this.markCars();
-//			for(int tempCar:sortIndex(this.cars.keySet())) {
-//				System.out.println(tempCar+" "+cars.get(tempCar));
-//			}
-//			System.out.println();
+			for(int tempCar:sortIndex(this.cars.keySet())) {
+				System.out.println(tempCar+" "+cars.get(tempCar));
+			}
+			System.out.println();
 			this.moveCarsOnRoad();
-//			for(int tempCar:sortIndex(this.cars.keySet())) {
-//				System.out.println(tempCar+" "+cars.get(tempCar));
-//			}
-//			System.out.println();
+			for(int tempCar:sortIndex(this.cars.keySet())) {
+				System.out.println(tempCar+" "+cars.get(tempCar));
+			}
+			System.out.println();
 			if(stillRoom) {
 				stillRoom=this.moveCarsInRoom();
 			}
 			this.moveCarsInRoom();
-//			for(int tempCar:sortIndex(this.cars.keySet())) {
-//				System.out.println(tempCar+" "+cars.get(tempCar));
-//			}
+			for(int tempCar:sortIndex(this.cars.keySet())) {
+				System.out.println(tempCar+" "+cars.get(tempCar));
+			}
 			this.time++;
 		}
 		System.out.println("调度结束时间为： "+time);
