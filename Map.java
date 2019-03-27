@@ -1,9 +1,13 @@
-package Match;
+package com.huawei;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 class Map{
+
 	//路口集合，道路集合，车辆集合，未出发的车辆集合和已经到达目的地的车辆集合，时间片，各种信息的总数。
 	HashMap<Integer,Cross> crosses;
 	HashMap<Integer,Road> roads;
@@ -37,8 +42,9 @@ class Map{
 			tempRoad.getCross(this.crosses.get(tempRoad.begin), this.crosses.get(tempRoad.end));
 		}
                 Algorithm A = new Algorithm();
-//                System.out.println(A);
+                //System.out.println(A);
                 A.Apply();
+                A.output(ansfile);
 //                for (Integer key:cars.keySet()){
 //                    Car car = cars.get(key);
 //                    String result = Integer.toString(car.id);
@@ -66,7 +72,7 @@ class Map{
 				int [] tempId = new int[4];
 				ArrayList<Road> tempRoads = new ArrayList<Road>();
 				int roadNum=0;
-				for(int i=1;i<tempLineArray.length;i++) {
+				for(int i=1;i<5;i++) {
 					tempId[i-1] = tempLineArray[i];
 					if(tempLineArray[i] == -1) {
 						tempRoads.add(new Road());
@@ -489,13 +495,44 @@ class Map{
                 CrossGraph = new HashMap<>();
                 for (Integer key: crosses.keySet()){
                     Cross nowCross = crosses.get(key);
-                    HashMap<Cross, Integer> nextCrossInfo = new HashMap<>();
                     for (Road nowRoad:nowCross.originCrossRoads){
                         if (nowRoad.endCross != null){
-                            nextCrossInfo.put(nowRoad.endCross, nowRoad.length);
+                            if (nowRoad.isDouble == 1){
+                            	Cross nowCross1 = nowRoad.beginCross;
+                                Cross nowCross2 = nowRoad.endCross;
+                                if (CrossGraph.containsKey(nowCross1)){
+                                    CrossGraph.get(nowCross1).put(nowCross2, nowRoad.length);
+                                }
+                                else {
+                                    HashMap<Cross, Integer> nextCrossInfo = new HashMap<>();
+                                    nextCrossInfo.put(nowCross2, nowRoad.length);
+                                    CrossGraph.put(nowCross1, nextCrossInfo);
+                                }
+                                
+                                if (CrossGraph.containsKey(nowCross2)) {
+                                	CrossGraph.get(nowCross2).put(nowCross1, nowRoad.length);
+                                }
+                                else {
+                                	HashMap<Cross, Integer> nextCrossInfo = new HashMap<>();
+                                    nextCrossInfo.put(nowCross1, nowRoad.length);
+                                    CrossGraph.put(nowCross2, nextCrossInfo);
+                                }
+                            }
+                            else {
+                            	if (nowRoad.beginCross.id == nowCross.id) {
+                            		Cross nowCross2 = nowRoad.endCross;
+                            		if (CrossGraph.containsKey(nowCross2)){
+                                        CrossGraph.get(nowCross).put(nowCross2, nowRoad.length);
+                                    }
+                                    else {
+                                        HashMap<Cross, Integer> nextCrossInfo = new HashMap<>();
+                                        nextCrossInfo.put(nowCross2, nowRoad.length);
+                                        CrossGraph.put(nowCross, nextCrossInfo);
+                                    }
+                            	}
+                            }
                         }
                     }
-                    CrossGraph.put(nowCross, nextCrossInfo);
                 }
             }
             public Algorithm(){
@@ -517,6 +554,7 @@ class Map{
                         pair.begin = floydans.get(i);
                         pair.end = floydans.get(i + 1);
                         nowCar.ansRoads.add(CrossesToRoad.get(pair));
+                        //System.out.println(CrossesToRoad.get(pair));
 //                        System.out.println("!!!!"+ pair.begin.id + "!!!!" + pair.end.id);//
 //                        System.out.println("!!!!"+ CrossesToRoad.get(pair));//
                     }
@@ -564,14 +602,39 @@ class Map{
                 for (Integer key:crosses.keySet()){
                     Cross nowCross = crosses.get(key);                    
                     for (int i = 0; i < nowCross.originCrossRoads.size(); ++i){
-                        if (nowCross.originCrossRoads.get(i).endCross != null){
+                    	Road nowRoad = nowCross.originCrossRoads.get(i);
+                        if (nowRoad.endCross != null){
+                        	if (nowRoad.isDouble == 1){
+                        		PairCross pair = new PairCross();
+                        		pair.begin = nowRoad.endCross;
+                        		pair.end = nowRoad.beginCross;
+                        		CrossesToRoad.put(pair, nowCross.originCrossRoads.get(i));
+                        	}
                             PairCross pair = new PairCross();
-                            pair.begin = nowCross;
-                            pair.end = nowCross.originCrossRoads.get(i).endCross;
+                            pair.begin = nowRoad.beginCross;
+                            pair.end = nowRoad.endCross;
                             CrossesToRoad.put(pair, nowCross.originCrossRoads.get(i));
                         }
                     }
                 }
+            }
+            
+            public void output(String filename) throws IOException {
+            	PrintStream bw = new PrintStream(new File(filename));
+            	for (Integer key:cars.keySet()) {
+            		bw.print("(");
+            		Car nowCar = cars.get(key);
+            		bw.print(nowCar.id);
+            		bw.print(",");
+            		bw.print(nowCar.startMoveTime);
+            		for (int i = 0; i < nowCar.ansRoads.size(); ++i) {
+            			bw.print(",");
+						//System.out.println(nowCar.ansRoads.get(i));
+            			bw.print(nowCar.ansRoads.get(i).id);
+            		}
+            		bw.print(")\n");
+            	}
+            	bw.close();
             }
         }	
 }

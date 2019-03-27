@@ -1,4 +1,4 @@
-package Match;
+package com.huawei;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -11,10 +11,10 @@ class Road {
 	int id, length, speedLimit, laneNum, begin, end, isDouble,carNum;
 	
 	//开始的路口
-	Cross beginCross,endCross;
+	Cross beginCross = null,endCross = null;
 	
 	//表明每个车道上的车的情况，从起点到终点的方向上，从1开始编号且不重复
-	ArrayList<ArrayDeque<Car>> roadStatus;
+	ArrayList<ArrayDeque<Car>> roadStatus = null;
 
 	//初始化道路信息
 	public Road(int[] init) {

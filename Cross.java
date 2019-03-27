@@ -1,4 +1,4 @@
-package Match;
+package com.huawei;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +31,6 @@ class Cross {
 		for(int i=0;i<4;i++) {
 			sortedCrossRoads.add(init.get(i));
 		}
-		this.sortedCrossRoads = init;
 		//把符合调度顺序的路口赋值
 		Collections.sort(sortedCrossRoads,new Comparator<Road>() {
 			public int compare(Road o1, Road o2) {
