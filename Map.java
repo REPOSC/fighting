@@ -36,7 +36,20 @@ class Map{
 			Road tempRoad = this.roads.get(i);
 			tempRoad.getCross(this.crosses.get(tempRoad.begin), this.crosses.get(tempRoad.end));
 		}
-		this.initMethod(ansfile);
+                Algorithm A = new Algorithm();
+//                System.out.println(A);
+                A.Apply();
+//                for (Integer key:cars.keySet()){
+//                    Car car = cars.get(key);
+//                    String result = Integer.toString(car.id);
+//                    result += ":";
+//                    for (int i = 0; i < car.ansRoads.size(); ++i){
+//                        result += Integer.toString(car.ansRoads.get(i).id) + " ";
+//                    }
+//                    result += "\n";
+//                    System.out.println(result);
+//                }
+                //this.initMethod(ansfile);
 	}
 	public void initCross(String file) throws IOException {
 		this.crosses = new HashMap<Integer, Cross>();
@@ -118,6 +131,8 @@ class Map{
 			e.printStackTrace();
 		}
 	}
+        
+        
 	public void initMethod(String file) throws IOException {
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -149,7 +164,7 @@ class Map{
 		String[] b = a.split(",");
 		int[] ans = new int[b.length];
 		for(int i = 0;i < b.length;i++) {
-			ans[i] = Integer.parseInt(b[i].strip());
+			ans[i] = Integer.parseInt(b[i].trim());
 		}
 		return ans;
 	}	
@@ -160,24 +175,24 @@ class Map{
 		this.time++;
 		boolean stillRoom = true;
 		while(this.arrived.size()<this.carTotal) {
-			System.out.println(this.time + " "+this.arrived.size());
+//			System.out.println(this.time + " "+this.arrived.size());
 			this.markCars();
-			for(int tempCar:sortIndex(this.cars.keySet())) {
-				System.out.println(tempCar+" "+cars.get(tempCar));
-			}
-			System.out.println();
+//			for(int tempCar:sortIndex(this.cars.keySet())) {
+//				System.out.println(tempCar+" "+cars.get(tempCar));
+//			}
+//			System.out.println();
 			this.moveCarsOnRoad();
-			for(int tempCar:sortIndex(this.cars.keySet())) {
-				System.out.println(tempCar+" "+cars.get(tempCar));
-			}
-			System.out.println();
+//			for(int tempCar:sortIndex(this.cars.keySet())) {
+//				System.out.println(tempCar+" "+cars.get(tempCar));
+//			}
+//			System.out.println();
 			if(stillRoom) {
 				stillRoom=this.moveCarsInRoom();
 			}
 			this.moveCarsInRoom();
-			for(int tempCar:sortIndex(this.cars.keySet())) {
-				System.out.println(tempCar+" "+cars.get(tempCar));
-			}
+//			for(int tempCar:sortIndex(this.cars.keySet())) {
+//				System.out.println(tempCar+" "+cars.get(tempCar));
+//			}
 			this.time++;
 		}
 		System.out.println("调度结束时间为： "+time);
@@ -369,5 +384,194 @@ class Map{
 		Collections.sort(ans);
 		return ans;
 	}
-	
+        
+        
+        class Algorithm{
+            private HashMap<Cross, HashMap<Cross, Integer> > CrossGraph;
+            private HashMap<PairCross, PairMinDistance > CrossMinDistances;
+            private HashMap<PairCross, Road> CrossesToRoad;
+            private void DIJKeverything(){
+                CrossMinDistances = new HashMap<>();
+                for (Cross cross1: CrossGraph.keySet()){
+                    for (Cross cross2: CrossGraph.keySet()){
+                        PairCross pair = new PairCross();
+                        pair.begin = cross1;
+                        pair.end = cross2;
+                        PairMinDistance minWay = new PairMinDistance();
+                        minWay.ThroughCrosses.add(pair.begin);                        
+                        if (pair.begin.equals(pair.end)){
+                            minWay.distance = 0;
+                        }
+                        else {
+                            minWay.ThroughCrosses.add(pair.end);
+                            if (CrossGraph.get(cross1).containsKey(cross2)){
+                                minWay.distance = CrossGraph.get(cross1).get(cross2);
+                            }
+                            else {
+                                minWay.distance = Integer.MAX_VALUE;
+                            }
+                        }
+                        CrossMinDistances.put(pair, minWay);
+                    }
+                }
+                for (Cross cross1: CrossGraph.keySet()){
+                    HashMap<Cross, Integer> mindistances = new HashMap<>();
+                    HashMap<Cross, Boolean> visited = new HashMap<>();
+                    for (Cross cross2: CrossGraph.keySet()){
+                        if (cross1.id == cross2.id){
+                            mindistances.put(cross2, 0);
+                        }
+                        else {
+                            mindistances.put(cross2, Integer.MAX_VALUE);
+                        }
+                        visited.put(cross2, false);
+                    }
+                    while (true){
+                        Cross minCross = null;
+                        int minValue = Integer.MAX_VALUE;
+                        for (Cross cross2: CrossGraph.keySet()){
+                            if (visited.get(cross2) == false && mindistances.get(cross2) < minValue){
+                                minValue = mindistances.get(cross2);
+                                minCross = cross2;
+                            }
+                        }
+                        if (minValue == Integer.MAX_VALUE){
+                            break;
+                        }
+                        visited.put(minCross, true);
+                        for (Cross cross2: CrossGraph.get(minCross).keySet()){
+                            if (CrossGraph.get(minCross).get(cross2) != Integer.MAX_VALUE &&
+                                    mindistances.get(minCross) != Integer.MAX_VALUE &&
+                                    CrossGraph.get(minCross).get(cross2) + mindistances.get(minCross) < mindistances.get(cross2)){
+                                mindistances.put(cross2, CrossGraph.get(minCross).get(cross2) + mindistances.get(minCross));
+                                PairCross pair = new PairCross();
+                                pair.begin = cross1;
+                                pair.end = cross2;
+                                PairMinDistance minWay = CrossMinDistances.get(pair);
+                                PairCross another = new PairCross();
+                                another.begin = cross1;
+                                another.end = minCross;
+                                PairMinDistance anotherWay = CrossMinDistances.get(another);
+                                minWay.ThroughCrosses.clear();
+                                minWay.ThroughCrosses.addAll(anotherWay.ThroughCrosses);
+                                minWay.ThroughCrosses.add(cross2);
+                                minWay.distance = mindistances.get(cross2);
+                            }
+                        }
+                    }
+                }
+//                for (Cross cross1: CrossGraph.keySet()){
+//                    for (Cross cross2: CrossGraph.keySet()){
+//                        for (Cross cross3: CrossGraph.keySet()){
+//                            PairCross pair1 = new PairCross();
+//                            pair1.begin = cross2; 
+//                            pair1.end = cross3;  
+//                            PairCross pair2 = new PairCross();
+//                            pair2.begin = cross2;  
+//                            pair2.end = cross1; 
+//                            PairCross pair3 = new PairCross();
+//                            pair3.begin = cross1;   
+//                            pair3.end = cross3; 
+//                            if (CrossMinDistances.get(pair2).distance < Integer.MAX_VALUE &&
+//                                    CrossMinDistances.get(pair3).distance < Integer.MAX_VALUE &&
+//                                    CrossMinDistances.get(pair2).distance + CrossMinDistances.get(pair3).distance <
+//                                    CrossMinDistances.get(pair1).distance){
+//                                PairMinDistance minWay = CrossMinDistances.get(pair1);
+//                                minWay.ThroughCrosses.add(1, cross1);
+//                                minWay.distance = CrossMinDistances.get(pair2).distance + CrossMinDistances.get(pair3).distance;
+//                            }
+//                        }
+//                    }
+//                }
+            }
+            private void initgraph(){
+                //初始化图
+                CrossGraph = new HashMap<>();
+                for (Integer key: crosses.keySet()){
+                    Cross nowCross = crosses.get(key);
+                    HashMap<Cross, Integer> nextCrossInfo = new HashMap<>();
+                    for (Road nowRoad:nowCross.originCrossRoads){
+                        if (nowRoad.endCross != null){
+                            nextCrossInfo.put(nowRoad.endCross, nowRoad.length);
+                        }
+                    }
+                    CrossGraph.put(nowCross, nextCrossInfo);
+                }
+            }
+            public Algorithm(){
+                bufferroads();
+                initgraph();
+                DIJKeverything();
+            }
+            public void Apply(){
+                for (Integer key:cars.keySet()){
+                    Car nowCar = cars.get(key);
+                    nowCar.startMoveTime = nowCar.time;
+                    nowCar.ansRoads.clear();
+                    PairCross pairCross = new PairCross();
+                    pairCross.begin = nowCar.departCross;
+                    pairCross.end = nowCar.arriveCross;
+                    ArrayList<Cross> floydans = CrossMinDistances.get(pairCross).ThroughCrosses;
+                    for (int i = 0; i < floydans.size() - 1; ++i){
+                        PairCross pair = new PairCross();
+                        pair.begin = floydans.get(i);
+                        pair.end = floydans.get(i + 1);
+                        nowCar.ansRoads.add(CrossesToRoad.get(pair));
+//                        System.out.println("!!!!"+ pair.begin.id + "!!!!" + pair.end.id);//
+//                        System.out.println("!!!!"+ CrossesToRoad.get(pair));//
+                    }
+                }
+            }
+            @Override
+            public String toString(){
+                StringBuilder result = new StringBuilder();
+                result.append("----------------------------\n");
+                for (Cross keybegin:CrossGraph.keySet()){
+                    result.append(keybegin.id);
+                    result.append(":\n");
+                    HashMap<Cross, Integer> pairnexts = CrossGraph.get(keybegin);
+                    for (Cross keyend:pairnexts.keySet()){
+                        result.append(keyend.id + ": " + pairnexts.get(keyend));
+                        result.append("\n");
+                    }
+                    result.append("\n");
+                }
+                result.append("----------------------------\n");
+                for (Cross cross1: CrossGraph.keySet()){
+                    for (Cross cross2: CrossGraph.keySet()){
+                        PairCross pair = new PairCross();
+                        pair.begin = cross1;
+                        pair.end = cross2;
+                        PairMinDistance minWay = CrossMinDistances.get(pair);
+                        result.append("[");
+                        if (minWay.ThroughCrosses.size() > 0){
+                            result.append(minWay.ThroughCrosses.get(0).id);
+                            for (int i = 1; i < minWay.ThroughCrosses.size(); ++i){
+                                result.append(",");
+                                result.append(minWay.ThroughCrosses.get(i).id);
+                            }
+                        }
+                        result.append("]:");
+                        result.append(minWay.distance);
+                        result.append("\n");
+                    }
+                }
+                return result.toString();
+            }
+
+            private void bufferroads() {
+                CrossesToRoad = new HashMap<>();
+                for (Integer key:crosses.keySet()){
+                    Cross nowCross = crosses.get(key);                    
+                    for (int i = 0; i < nowCross.originCrossRoads.size(); ++i){
+                        if (nowCross.originCrossRoads.get(i).endCross != null){
+                            PairCross pair = new PairCross();
+                            pair.begin = nowCross;
+                            pair.end = nowCross.originCrossRoads.get(i).endCross;
+                            CrossesToRoad.put(pair, nowCross.originCrossRoads.get(i));
+                        }
+                    }
+                }
+            }
+        }	
 }
