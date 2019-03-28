@@ -2,6 +2,7 @@ package com.huawei;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 //每条道路对象
@@ -16,8 +17,11 @@ class Road {
 	//表明每个车道上的车的情况，从起点到终点的方向上，从1开始编号且不重复
 	ArrayList<ArrayDeque<Car>> roadStatus = null;
 
+	//暂存map
+	Map map;
+
 	//初始化道路信息
-	public Road(int[] init) {
+	public Road(int[] init, Map tempMap) {
 		this.id = init[0];
 		this.length = init[1];
 		this.speedLimit = init[2];
@@ -32,9 +36,41 @@ class Road {
 			ArrayDeque<Car> tempLane = new ArrayDeque<Car>();
 			roadStatus.add(tempLane);
 		}
+		map = tempMap;
 	}
 	public Road() {
 		this.id = -1;
+	}
+
+	private static final int wLen = 1, wCarNum = 1, wSpeed = -1, wLocation = -1;
+	//获得当前加权路径长度  nowcross是车即将进入的入口
+	public int getVirtualLength(Cross nowCross) {
+        if (id == -1){
+            throw new NullPointerException();
+        }
+		int virtuallength = 0, laneCarNum = 0, lastCarSpeed = 0, lastCarPosition = 0;
+		int base;
+		if(nowCross == this.beginCross) {
+			base = 0;
+		}else {
+			base = this.laneNum;
+		}
+		for(int i=base;i<base+this.laneNum;i++) {
+			laneCarNum = this.roadStatus.get(i).size();
+			if(laneCarNum != length) {
+                if (this.roadStatus.get(i).size() == 0){
+                    lastCarPosition = 0;
+                    lastCarSpeed = this.speedLimit;
+                }
+                else {
+                    lastCarPosition = this.roadStatus.get(i).getLast().status.location;
+                    lastCarSpeed = this.roadStatus.get(i).getLast().status.nowSpeed;
+                }				
+				break;
+			}
+		}
+		virtuallength = wCarNum*laneCarNum + wLen*this.length + wSpeed*lastCarSpeed + wLocation*lastCarPosition;
+		return virtuallength;
 	}
 	
 	//将cross对象传进来
@@ -55,6 +91,7 @@ class Road {
 		for(int i=base;i<base+this.laneNum;i++) {
 			for(Car tempCar:this.roadStatus.get(i)) {
 				if(tempCar.status.isTermination==false) {
+					map.algorithm.OperateTheCar(tempCar);
 					return tempCar;
 				}
 				else {
@@ -64,6 +101,7 @@ class Road {
 		}
 		return null;
 	}
+
 	
 	public boolean equals(Road r) {
 		return this.id == r.id;
