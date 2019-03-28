@@ -1,5 +1,6 @@
 package com.huawei;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
@@ -89,7 +90,7 @@ class Car {
 	//重大问题，没有考虑生成回路死锁的状况
 	//车辆过路口，返回是否成功进入路口，前提是已经判断可以行动，即没有其他路口车辆限制
 	//传入路口参数是不合理的
-	public boolean passCross(Cross crossToPass) { 
+	public boolean passCross(Cross crossToPass) {
 		Road nextRoad = this.ansRoads.get(this.status.nextRoadIndex);
 		int base;
 		if(nextRoad.beginCross.equals(crossToPass)) {
@@ -115,6 +116,9 @@ class Car {
 				this.status.location = this.status.S2;
 			}
 			//更新驶入新的车道后车的状态已经驶出和驶入的两个车道的信息。
+			if(this.ansRoads.get(this.status.nowRoadIndex).roadStatus.get(this.status.laneNum).size()==0){
+				throw new NumberFormatException();
+			}
 			this.ansRoads.get(this.status.nowRoadIndex).roadStatus.get(this.status.laneNum).pop();
 			this.ansRoads.get(this.status.nowRoadIndex).carNum--;
 			this.status.nowRoadIndex++;
@@ -203,12 +207,12 @@ class Car {
 	public String toString() {
 		// TODO Auto-generated method stub
 		if(this.status.nextRoadIndex<0) {
-			return "id: "+this.id+" isterminal: "+this.status.isTermination+" nowRoad: "+this.ansRoads.get(this.status.nowRoadIndex).id+
-					" Lane: "+this.status.laneNum+" Location: "+this.status.location+" nextDirect: "+this.status.actCross+" nextRoad: "+"arrived";
-			
+			return "id:,"+this.id+",isterminal:,"+this.status.isTermination+",nowRoad:,"+this.ansRoads.get(this.status.nowRoadIndex).id+
+					",Lane:,"+this.status.laneNum+",Location:,"+this.status.location+",nextDirect:,"+this.status.actCross+",nextRoad:,"+"arrived";
+
 		}
-		return "id: "+this.id+" isterminal: "+this.status.isTermination+" nowRoad: "+this.ansRoads.get(this.status.nowRoadIndex).id+
-				" Lane: "+this.status.laneNum+" Location: "+this.status.location+" nextDirect: "+this.status.actCross+" nextRoad: "+this.ansRoads.get(this.status.nextRoadIndex).id;
+		return "id:,"+this.id+",isterminal:,"+this.status.isTermination+",nowRoad:,"+this.ansRoads.get(this.status.nowRoadIndex).id+
+				",Lane:,"+this.status.laneNum+",Location:,"+this.status.location+",nextDirect:,"+this.status.actCross+",nextRoad:,"+this.ansRoads.get(this.status.nextRoadIndex).id;
 	}
 }
 

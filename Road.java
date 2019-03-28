@@ -70,6 +70,9 @@ class Road {
 			}
 		}
 		virtuallength = wCarNum*laneCarNum + wLen*this.length + wSpeed*lastCarSpeed + wLocation*lastCarPosition;
+		if (virtuallength <= 0){
+			return 0;
+		}
 		return virtuallength;
 	}
 	
@@ -92,6 +95,28 @@ class Road {
 			for(Car tempCar:this.roadStatus.get(i)) {
 				if(tempCar.status.isTermination==false) {
 					map.algorithm.OperateTheCar(tempCar);
+					return tempCar;
+				}
+				else {
+					break;
+				}
+			}
+		}
+		return null;
+	}
+
+	//Just have a look
+	public Car seeNextCar(Cross nowCross) {
+		int base;
+		if(nowCross == this.beginCross) {
+			base = this.laneNum;
+		}
+		else {
+			base = 0;
+		}
+		for(int i=base;i<base+this.laneNum;i++) {
+			for(Car tempCar:this.roadStatus.get(i)) {
+				if(tempCar.status.isTermination==false) {
 					return tempCar;
 				}
 				else {
