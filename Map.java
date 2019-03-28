@@ -28,7 +28,7 @@ class Map {
     Algorithm algorithm;
     int time;
     int carTotal;
-    PrintStream printstream = new PrintStream(new File("debug.txt"));
+    private int totalRoadRoom = 0;
 
 
     //读入文件，初始化车辆、路口以及道路信息。读入答案。
@@ -36,6 +36,7 @@ class Map {
         this.notMoved = new ArrayList<Car>();
         this.arrived = new ArrayList<Car>();
         this.initRoad(roadfile);
+        this.storeRoadRoom();
         this.initCross(crossfile);
         this.initCar(carfile);
         this.time = 0;
@@ -173,10 +174,10 @@ class Map {
         this.moveCarsInRoom();
         this.time++;
         boolean stillRoom = true;
-        System.setOut(new PrintStream(new File("debug2.txt")));
+//        System.setOut(new PrintStream(new File("debug.csv")));
         while (this.arrived.size() < this.carTotal) {
 //          System.out.println(time);
-            System.out.println("time "+this.time + " "+this.arrived.size());
+//          System.out.println("time "+this.time + " "+this.arrived.size());
             this.markCars();
 //			for(int tempCar:sortIndex(this.cars.keySet())) {
 //				System.out.println(tempCar+" "+cars.get(tempCar));
@@ -191,13 +192,13 @@ class Map {
                 stillRoom = this.moveCarsInRoom();
             }
             this.moveCarsInRoom();
-			for(int tempCar:sortIndex(this.cars.keySet())) {
-				System.out.println(tempCar+" "+cars.get(tempCar));
-			}
-			System.out.println();
+//			for(int tempCar:sortIndex(this.cars.keySet())) {
+//				System.out.println(tempCar+" "+cars.get(tempCar));
+//			}
+//			System.out.println();
             this.time++;
         }
-        System.out.println("调度结束时间为： " + time);
+//      System.out.println("调度结束时间为： " + time);
         int ans = 0;
         for (Car oneCar : this.arrived) {
             ans += (oneCar.arrivedTime - oneCar.startMoveTime);
@@ -350,15 +351,25 @@ class Map {
         }
     }
 
+    private void storeRoadRoom(){
+        for (Integer key:roads.keySet()){
+            totalRoadRoom += roads.get(key).length;
+        }
+    }
     //处理未出发的车辆
     public boolean moveCarsInRoom() {
         //假设提供的车辆id为顺序
         int length = this.notMoved.size();
         for (int i = 0; i < length; i++) {
+            int nowOnRoadCarNum = carTotal - arrived.size() - notMoved.size();
+            if (nowOnRoadCarNum >= totalRoadRoom * 0.5){
+                return true;
+            }
             Car tempCar = this.notMoved.get(i);
             if (this.time >= tempCar.startMoveTime) {
                 if (tempCar.moveCarInRoom()) {
                     this.notMoved.remove(tempCar);
+                    tempCar.startMoveTime = this.time;
                     length--;
                     i--;
                 }
@@ -605,13 +616,37 @@ class Map {
 
         public void OperateTheCar(Car car) {
             Cross nowCross;
-            PrintCar(car, printstream);
+            //PrintCar(car, printstream);
             if (car.status.laneNum < car.ansRoads.get(car.status.nowRoadIndex).laneNum) {
                 nowCross = car.ansRoads.get(car.status.nowRoadIndex).endCross;
             } else {
                 nowCross = car.ansRoads.get(car.status.nowRoadIndex).beginCross;
             }
+            Road nowRoad = car.ansRoads.get(car.status.nowRoadIndex);
+            Integer saved_length = Integer.MAX_VALUE;
+            boolean reversed = false;
+            if (nowRoad.isDouble == 1) {
+                if (car.status.laneNum < nowRoad.laneNum) {
+                    reversed = false;
+                } else {
+                    reversed = true;
+                }
+                if (reversed) {
+                    saved_length = CrossGraph.get(nowRoad.beginCross).get(nowRoad.endCross);
+                    CrossGraph.get(nowRoad.beginCross).put(nowRoad.endCross, Road.BIG_VALUE * 2);
+                } else {
+                    saved_length = CrossGraph.get(nowRoad.endCross).get(nowRoad.beginCross);
+                    CrossGraph.get(nowRoad.endCross).put(nowRoad.beginCross, Road.BIG_VALUE * 2);
+                }
+            }
             HashMap<Cross, PairMinDistance> now_result = DIJKElement(nowCross);
+            if (nowRoad.isDouble == 1) {
+                if (reversed) {
+                    CrossGraph.get(nowRoad.beginCross).put(nowRoad.endCross, saved_length);
+                } else {
+                    CrossGraph.get(nowRoad.endCross).put(nowRoad.beginCross, saved_length);
+                }
+            }
             ArrayList<Cross> next_crosses = now_result.get(car.arriveCross).ThroughCrosses;
             ArrayList<Road> through_roads = car.ansRoads;
             int i = car.status.nowRoadIndex + 1;
@@ -624,7 +659,7 @@ class Map {
                 pair.end = next_crosses.get(j + 1);
                 through_roads.add(CrossesToRoad.get(pair));
             }
-            PrintCar(car, printstream);
+            //PrintCar(car, printstream);
         }
 
         public void UpdateGraph(Car car) {
