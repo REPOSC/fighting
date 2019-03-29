@@ -1,5 +1,8 @@
 package com.huawei;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,7 +47,7 @@ class Road {
 	}
 
 	private static final int wLen = 1, wCarNum = 1, wSpeed = -1, wLocation = -1;
-	private int startblocktime = 0;
+	//private int startblocktime = 0;
 	//获得当前加权路径长度  nowcross是车即将进入的入口
 	public int getVirtualLength(Cross nowCross) {
         if (id == -1){
@@ -90,6 +93,10 @@ class Road {
 		this.endCross = end;
 	}
 	
+	
+	//OK
+	//取得第一优先级的车辆，如果没有规划路线则进行规划
+	//规划后remark，如果仍然是等待车辆，则返回该车辆，如果是终止状态，那么remarktermianl当前车道，并且继续寻找第一优先级的车
 	//取得每条路准备经过传入路口的下一辆车
 	public Car getNextCar(Cross nowCross) {
 		int base;
@@ -99,36 +106,48 @@ class Road {
 		else {
 			base = 0;
 		}
-		for(int i=base;i<base+this.laneNum;i++) {
-			for(Car tempCar:this.roadStatus.get(i)) {
-				if(tempCar.status.isTermination==false) {
-					map.algorithm.OperateTheCar(tempCar);
-					return tempCar;
-				}
-				else {
-					break;
-				}
+		int[] finishedLane = new int[this.laneNum];
+		int count = 0;
+		for(int loc = this.length;loc>0;loc--) {
+			if(count == this.laneNum) {
+				break;
 			}
-		}
-		return null;
-	}
-
-	//Just have a look
-	public Car seeNextCar(Cross nowCross) {
-		int base;
-		if(nowCross == this.beginCross) {
-			base = this.laneNum;
-		}
-		else {
-			base = 0;
-		}
-		for(int i=base;i<base+this.laneNum;i++) {
-			for(Car tempCar:this.roadStatus.get(i)) {
-				if(tempCar.status.isTermination==false) {
-					return tempCar;
+			for(int i=base;i<base+this.laneNum;i++) {
+				if(finishedLane[i-base]==1) {
+					continue;
 				}
-				else {
-					break;
+				for(Car tempCar:this.roadStatus.get(i)) {
+					if(tempCar.status.location == loc) {
+						if(tempCar.status.isTermination==false) {
+							if(!tempCar.status.hasPlan) {
+								map.algorithm.OperateTheCar(tempCar);
+								tempCar.status.hasPlan = true;
+								
+								System.out.println(tempCar.id+" "+tempCar.speedLimit+" "+tempCar.ansRoads.size()+" "+tempCar.ansRoads+" "+tempCar.status.nextRoadIndex+" "+tempCar.ansRoads.get(tempCar.status.nextRoadIndex));
+								tempCar.status.nextSpeed = Math.min(tempCar.speedLimit,tempCar.ansRoads.get(tempCar.status.nextRoadIndex).speedLimit);
+								tempCar.status.actCross = nowCross.nextDirection(tempCar.ansRoads.get(tempCar.status.nowRoadIndex).id, tempCar.ansRoads.get(tempCar.status.nextRoadIndex).id);
+							}
+							if(tempCar.reMarkWaitingFirstCar()) {
+								return tempCar;
+							}
+							else {
+								Car.reMarkTerminal(this.roadStatus.get(i));
+								return null;
+							}
+							
+						}
+						else {
+							finishedLane[i-base] = 1;
+							count++;
+							break;
+						}
+					}
+					else if(tempCar.status.location>loc) {
+						continue;
+					}
+					else {
+						break;
+					}	
 				}
 			}
 		}

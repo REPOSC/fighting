@@ -50,10 +50,10 @@ class Cross {
 			return 'a';
 		int nowIndex=0,nextIndex = 0;
 		for(int i =0;i<4;i++) {
-			if(now == crossRoadsId[i]) {
+			if(now == this.crossRoadsId[i]) {
 				nowIndex = i;
 			}
-			else if(next == crossRoadsId[i]) {
+			else if(next == this.crossRoadsId[i]) {
 				nextIndex = i;
 			}
 		}
