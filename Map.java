@@ -1,5 +1,6 @@
 package com.huawei;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -46,31 +47,22 @@ class Map {
 //        System.setOut(new PrintStream(new File("debug.csv")));
 		while (this.arrived.size() < this.carTotal) {
 //          System.out.println(time);
-			System.out.println(
-					"time " + this.time + " " + this.arrived.size() + " " + this.notMoved.size() + " " + carTotal);
+//          System.out.println("time "+this.time + " "+this.arrived.size());
 			this.markCars();
-//			System.out.println("1");
 //			for(int tempCar:sortIndex(this.cars.keySet())) {
 //				System.out.println(tempCar+" "+cars.get(tempCar));
 //			}
 //			System.out.println();
+			this.algorithm.colorAllRoads();
 			this.moveCarsOnRoad();
 //			for(int tempCar:sortIndex(this.cars.keySet())) {
 //				System.out.println(tempCar+" "+cars.get(tempCar));
 //			}
 //			System.out.println();
-
 			if (stillRoom) {
 				stillRoom = this.moveCarsInRoom();
 			}
-//			System.out.println("2");
 			this.moveCarsInRoom();
-//			if(time>477) {
-//				for(int tempCar:sortIndex(this.cars.keySet())) {
-//					System.out.println(tempCar+" "+cars.get(tempCar));
-//				}
-//				System.out.println();
-//			}
 //			for(int tempCar:sortIndex(this.cars.keySet())) {
 //				System.out.println(tempCar+" "+cars.get(tempCar));
 //			}
@@ -101,7 +93,7 @@ class Map {
 		}
 		algorithm = new Algorithm();
 		algorithm.Apply();
-		// algorithm.output(ansfile);
+		algorithm.output("debug.txt");
 	}
 
 	public void initCross(String file) throws IOException {
@@ -228,6 +220,7 @@ class Map {
 	// 如果第一辆车不能走，那么先在passcross返回false之前手动把他变成terminal，然后remarkterminal
 	// 当一辆车走过去之后，marksingleline一次
 
+	
 	// OK
 	// 对某一条车道进行标记，其中的firstcar是不准确的
 	public void markSingleLane(ArrayDeque<Car> tempLane) {
@@ -245,40 +238,17 @@ class Map {
 				}
 			} else {
 				tempCar = iter.next();
-				if(!tempCar.markFollowCar(frontCar)) {
-					break;
-				}
+				tempCar.markFollowCar(frontCar);
 				frontCar = tempCar;
 			}
 		}
 	}
 
-	public void firstTimeMarkSingleLane(ArrayDeque<Car> tempLane) {
-		Iterator<Car> iter = tempLane.iterator();
-		Car frontCar = null, tempCar;
-		boolean count = true;
-		while (iter.hasNext()) {
-			if (count) {
-				frontCar = iter.next();
-				if (frontCar.firstTimeMarkFirstCar()) {
-					count = false;
-				} else {
-					this.arrived.add(frontCar);
-					frontCar.arrivedTime = this.time + 1;
-				}
-			} else {
-				tempCar = iter.next();
-				tempCar.firstTimeMarkFollowCar(frontCar);
-				frontCar = tempCar;
-			}
-		}
-	}
 
 	// OK
 	// 首先处理每条道路，对车辆进行标记
 	public void markCars() {
-//		Map.waitCarNum = this.carTotal - this.notMoved.size() - this.arrived.size();
-		Map.waitCarNum = 0;
+		Map.waitCarNum = this.carTotal - this.notMoved.size() - this.arrived.size();
 		for (int i : sortIndex(this.roads.keySet())) {
 			Road nowRoad = this.roads.get(i);
 			if (nowRoad.carNum == 0) {
@@ -288,10 +258,9 @@ class Map {
 				if (tempLane.size() == 0) {
 					continue;
 				}
-				this.firstTimeMarkSingleLane(tempLane);
+				this.markSingleLane(tempLane);
 			}
 		}
-//		System.out.println(Map.waitCarNum);
 	}
 
 	// 标记后处理每一个路口
@@ -303,10 +272,7 @@ class Map {
 		boolean judge;
 		int lastWaitCarNum = 0;
 		boolean haveDeadLock = false;
-//		boolean tempCrossOver = false;
-		int count = 0;
 		while (Map.waitCarNum > 0) {
-			count++;
 			if (lastWaitCarNum == Map.waitCarNum) {
 				haveDeadLock = true;
 				break;
@@ -319,26 +285,22 @@ class Map {
 				boolean[] roadFinished = { false, false, false, false };
 				boolean canLeft, canRight;
 				while (judge) {
-//					System.out.println("      +++"+Map.waitCarNum);
 					judge = false;
 					for (roadIndex = 4 - nowCross.roadNum; roadIndex < 4; roadIndex++) {
-//						System.out.println("22");
 						if (roadFinished[roadIndex]) {
 							continue;
 						}
 						tempRoad = nowCross.sortedCrossRoads.get(roadIndex);
-
+						
 						tempCar = tempRoad.getNextCar(nowCross);
 						canLeft = false;
 						canRight = false;
 						boolean finishThisRoad = true;
 						int canPassCross;
 						while (tempCar != null) {
-
-//							System.out.println(Map.waitCarNum);
-//							System.out.println("         ==="+Map.waitCarNum);
 							finishThisRoad = false;
 							tempLaneNum = tempCar.status.laneNum;
+							judge = true;
 							if (tempCar.status.actCross == 'l') {
 								if (!canLeft) {
 									Car otherCar = nowCross.getNextRoadDirect(tempRoad, 1).getNextCar(nowCross);
@@ -361,20 +323,13 @@ class Map {
 								canRight = true;
 							}
 							canPassCross = tempCar.passCross(nowCross);
-							if (canPassCross == 1) {
-								judge = true;
+							if (canPassCross==1) {
 								markSingleLane(tempRoad.roadStatus.get(tempLaneNum));
 								algorithm.UpdateGraph(tempCar);
-//								System.out.println("      +++111");
 							} else if (canPassCross == -1) {
-								judge = true;
 								Car.reMarkTerminal(tempRoad.roadStatus.get(tempLaneNum));
-
-//								System.out.println("      +++222");
 							} else {
 								finishThisRoad = true;
-
-//								System.out.println("      +++333");
 								break;
 							}
 							tempCar = tempRoad.getNextCar(nowCross);
@@ -386,10 +341,8 @@ class Map {
 					}
 
 				}
-
 			}
 		}
-//		System.out.println(count);
 		if (haveDeadLock) {
 			throw new DeadLockException();
 		}
@@ -413,7 +366,7 @@ class Map {
 		int length = this.notMoved.size();
 		for (int i = 0; i < length; i++) {
 			int nowOnRoadCarNum = carTotal - arrived.size() - notMoved.size();
-			if (nowOnRoadCarNum >= totalRoadRoom * 0.3) {
+			if (nowOnRoadCarNum >= totalRoadRoom * 0.5) {
 				return true;
 			}
 			Car tempCar = this.notMoved.get(i);
@@ -482,12 +435,6 @@ class Map {
 				}
 				visited.put(minCross, true);
 				for (Cross cross2 : CrossGraph.get(minCross).keySet()) {
-					if (!CrossGraph.get(minCross).containsKey(cross2)) {
-						System.out.println("notcontain");
-					}
-					if (CrossGraph.get(minCross).get(cross2) == null) {
-						System.out.println("null");
-					}
 					if (CrossGraph.get(minCross).get(cross2) != Integer.MAX_VALUE
 							&& mindistances.get(minCross) != Integer.MAX_VALUE && CrossGraph.get(minCross).get(cross2)
 									+ mindistances.get(minCross) < mindistances.get(cross2)) {
@@ -499,7 +446,13 @@ class Map {
 						minWay.ThroughCrosses.clear();
 						minWay.ThroughCrosses.addAll(anotherWay.ThroughCrosses);
 						minWay.ThroughCrosses.add(cross2);
+						for (int i = 0; i < minWay.ThroughCrosses.size() - 1; ++i) {
+							PairCross pair = new PairCross();
+							pair.begin = minWay.ThroughCrosses.get(i);
+							pair.end = minWay.ThroughCrosses.get(i + 1);
+						}
 						minWay.distance = mindistances.get(cross2);
+						System.out.println();
 					}
 				}
 			}
@@ -528,8 +481,11 @@ class Map {
 			CrossGraph = new HashMap<>();
 			for (Integer key : crosses.keySet()) {
 				Cross nowCross = crosses.get(key);
-				for (Road nowRoad : nowCross.originCrossRoads) {					
+				for (Road nowRoad : nowCross.originCrossRoads) {
 					if (nowRoad.endCross != null) {
+						if (nowCross.id == 10 && nowRoad.beginCross.id == 9) {
+							System.out.println(nowRoad.endCross.id);
+						}
 						if (nowRoad.isDouble == 1) {
 							Cross nowCross1 = nowRoad.beginCross;
 							Cross nowCross2 = nowRoad.endCross;
@@ -541,7 +497,6 @@ class Map {
 								CrossGraph.put(nowCross1, nextCrossInfo);
 							}
 
-							
 							if (CrossGraph.containsKey(nowCross2)) {
 								CrossGraph.get(nowCross2).put(nowCross1, getLength(nowRoad, nowCross2));
 							} else {
@@ -550,8 +505,9 @@ class Map {
 								CrossGraph.put(nowCross2, nextCrossInfo);
 							}
 						} else {
-							if (nowRoad.beginCross.id == nowCross.id) {
+							if (nowRoad.beginCross.id == nowCross.id) {									
 								Cross nowCross2 = nowRoad.endCross;
+								
 								if (CrossGraph.containsKey(nowCross)) {
 									CrossGraph.get(nowCross).put(nowCross2, getLength(nowRoad, nowCross));
 								} else {
@@ -562,10 +518,10 @@ class Map {
 							}
 						}
 					}
-					
 				}
 			}
 		}
+
 		public Algorithm() {
 			bufferroads();
 			initgraph();
@@ -596,7 +552,7 @@ class Map {
 			result.append(nowCar.arriveCross.id);
 			result.append("]:");
 			for (int i = 0; i < nowCar.ansRoads.size(); ++i) {
-				result.append(nowCar.ansRoads.get(i).id);
+				result.append(nowCar.ansRoads.get(i));
 				result.append(" ");
 			}
 			result.append("[");
@@ -671,17 +627,107 @@ class Map {
 				}
 			}
 		}
-
+		public Boolean isNowLaneDanger(Road road, Cross nowCross) {
+			int base;
+			if (nowCross == road.beginCross) {
+				base = 0;
+			} else {
+				base = road.laneNum;
+			}
+			for (int i = base; i < base + road.laneNum; i++) {
+				if (road.roadStatus.get(i).size() == 0) { 
+					return false;
+				}else if(road.roadStatus.get(i).getLast().status.location == 1){
+					continue;
+				}else if(road.roadStatus.get(i).getLast().status.isTermination == false){
+					return true;
+				}else {
+					return false;
+				}
+			}
+			return true;
+		}
 		public void OperateTheCar(Car car) {
-			Cross nowCross;
-			// PrintCar(car, printstream);
+			Cross nowCross;			
 			if (car.status.laneNum < car.ansRoads.get(car.status.nowRoadIndex).laneNum) {
 				nowCross = car.ansRoads.get(car.status.nowRoadIndex).endCross;
 			} else {
 				nowCross = car.ansRoads.get(car.status.nowRoadIndex).beginCross;
 			}
 			Road nowRoad = car.ansRoads.get(car.status.nowRoadIndex);
-			Integer saved_length = Integer.MAX_VALUE;
+			int saved_length = markNowRoadCannotReturnBack(car, nowRoad);
+			int []deadlock_saved_length = new int[4];
+			for (int i = 0; i < 4; ++i) {
+				if (nowCross.originCrossRoads.get(i).id != nowRoad.id) {
+					boolean couldIn = false;
+					if (isNowLaneDanger(nowCross.originCrossRoads.get(i), nowCross)) {
+						int base;
+						if (nowCross == nowRoad.beginCross) {
+							base = 0;
+						} else {
+							base = nowRoad.laneNum;
+						}
+						for (int j = base; j < base + nowRoad.laneNum; j++) {
+							if (nowRoad.roadStatus.get(i).size() == 0) { 
+								couldIn = true;
+								break;
+							}else if(nowRoad.roadStatus.get(i).getLast().status.location == 1){
+								continue;
+							}else if(nowRoad.roadStatus.get(i).getLast().status.location > 1){
+								couldIn = true;
+								break;
+							}
+						}
+						if (!couldIn) {
+							Road road = nowCross.originCrossRoads.get(i);
+							deadlock_saved_length[i] = road.length;
+							road.length = Road.Big_value;
+						}
+					}
+				}
+			}
+			HashMap<Cross, PairMinDistance> now_result = DIJKElement(nowCross);
+			for (int i = 0; i < 4; ++i) {
+				if (nowCross.originCrossRoads.get(i).id != nowRoad.id) {
+					Road road = nowCross.originCrossRoads.get(i);
+					road.length = deadlock_saved_length[i];
+				}
+			}
+			
+			disableNowRoadCannotReturnBack(car, nowRoad, saved_length);
+			ArrayList<Cross> next_crosses = now_result.get(car.arriveCross).ThroughCrosses;
+			ArrayList<Road> through_roads = car.ansRoads;
+			int i = car.status.nowRoadIndex + 1;
+			if (through_roads.size() > i) {
+				through_roads.subList(i, through_roads.size()).clear();
+			}
+			for (int j = 0; j < next_crosses.size() - 1; ++j) {
+				PairCross pair = new PairCross();
+				pair.begin = next_crosses.get(j);
+				pair.end = next_crosses.get(j + 1);
+				through_roads.add(CrossesToRoad.get(pair));
+			}			
+			PrintCar(car, System.out);
+		}
+
+		private void disableNowRoadCannotReturnBack(Car car, Road nowRoad, int saved_length) {
+			boolean reversed = false;
+			if (nowRoad.isDouble == 1) {
+				if (car.status.laneNum < nowRoad.laneNum) {
+					reversed = false;
+				} else {
+					reversed = true;
+				}
+				if (reversed) {
+					CrossGraph.get(nowRoad.beginCross).put(nowRoad.endCross, saved_length);
+				} else {
+					CrossGraph.get(nowRoad.endCross).put(nowRoad.beginCross, saved_length);
+				}
+			}
+		}
+
+		private int markNowRoadCannotReturnBack(Car car, Road nowRoad) {
+			int saved_length = Integer.MAX_VALUE;
 			boolean reversed = false;
 			if (nowRoad.isDouble == 1) {
 				if (car.status.laneNum < nowRoad.laneNum) {
@@ -697,32 +743,12 @@ class Map {
 					CrossGraph.get(nowRoad.endCross).put(nowRoad.beginCross, Road.BIG_VALUE * 2);
 				}
 			}
-			HashMap<Cross, PairMinDistance> now_result = DIJKElement(nowCross);
-			if (nowRoad.isDouble == 1) {
-				if (reversed) {
-					CrossGraph.get(nowRoad.beginCross).put(nowRoad.endCross, saved_length);
-				} else {
-					CrossGraph.get(nowRoad.endCross).put(nowRoad.beginCross, saved_length);
-				}
-			}
-			ArrayList<Cross> next_crosses = now_result.get(car.arriveCross).ThroughCrosses;
-			ArrayList<Road> through_roads = car.ansRoads;
-			int i = car.status.nowRoadIndex + 1;
-			if (through_roads.size() > i) {
-				through_roads.subList(i, through_roads.size()).clear();
-			}
-			for (int j = 0; j < next_crosses.size() - 1; ++j) {
-				PairCross pair = new PairCross();
-				pair.begin = next_crosses.get(j);
-				pair.end = next_crosses.get(j + 1);
-				through_roads.add(CrossesToRoad.get(pair));
-			}
-			// PrintCar(car, printstream);
+			return saved_length;
 		}
 
 		public void UpdateGraph(Car car) {
 			PairCross pair = new PairCross();
-			Cross justPassedCross, nextCross;
+			Cross justPassedCross,nextCross;
 			Road nowRoad = car.ansRoads.get(car.status.nowRoadIndex);
 			if (car.status.laneNum < nowRoad.laneNum) {
 				pair.begin = nowRoad.beginCross;
@@ -736,7 +762,7 @@ class Map {
 				nextCross = nowRoad.beginCross;
 			}
 			CrossGraph.get(pair.begin).put(pair.end, nowRoad.getVirtualLength(nextCross));
-			Road formerRoad = car.ansRoads.get(car.status.nowRoadIndex - 1);
+			Road formerRoad = car.ansRoads.get(car.status.nowRoadIndex-1);
 			if (justPassedCross.id == formerRoad.beginCross.id) {
 				pair.begin = formerRoad.endCross;
 				pair.end = formerRoad.beginCross;
@@ -745,7 +771,7 @@ class Map {
 				pair.end = formerRoad.endCross;
 			}
 			CrossGraph.get(pair.begin).put(pair.end, formerRoad.getVirtualLength(justPassedCross));
-
+			
 //			if (car.status.nowRoadIndex >= car.ansRoads.size()) {
 //				return;
 //			}
@@ -772,7 +798,96 @@ class Map {
 //			}
 //			CrossGraph.get(pair.begin).put(pair.end, nextRoad.getVirtualLength(nowCross));
 		}
-
+		void cleanLastdfs() {
+			for (Integer key:roads.keySet()) {
+				if (roads.get(key).getPositiveColor() == Road.DANGER_ROTATE_COLOR) {
+					roads.get(key).setPositiveColor(Road.DANGER_COLOR);
+				}
+				else if (roads.get(key).getNegetiveColor() == Road.DANGER_ROTATE_COLOR) {
+					roads.get(key).setNegetiveColor(Road.DANGER_COLOR);
+				}
+			}
+		}
+		void dfsForRotate(Cross cross) {
+			for (int i = 0; i < cross.originCrossRoads.size(); ++i) {
+				Road linkedRoad = cross.originCrossRoads.get(i);
+				if (linkedRoad.endCross == null) {
+					continue;
+				}
+				Color savedColor;
+				if (linkedRoad.isDouble == 0) {
+					if (linkedRoad.beginCross.id == cross.id) {
+						savedColor = linkedRoad.getPositiveColor();
+						if (savedColor == Road.SAFE_COLOR) {
+							continue;
+						}
+						else if (savedColor == Road.SEARCHING_COLOR) {
+							return;
+						}
+						linkedRoad.setPositiveColor(Road.SEARCHING_COLOR);
+						dfsForRotate(linkedRoad.endCross);
+						linkedRoad.setPositiveColor(savedColor);
+					}
+				}
+				else {
+					if (linkedRoad.beginCross.id == cross.id) {
+						savedColor = linkedRoad.getPositiveColor();
+						if (savedColor != Road.DANGER_COLOR) {
+							continue;
+						}
+						else if (savedColor == Road.SEARCHING_COLOR) {
+							return;
+						}
+						linkedRoad.setPositiveColor(Road.SEARCHING_COLOR);
+						dfsForRotate(linkedRoad.endCross);
+						linkedRoad.setPositiveColor(savedColor);
+					}
+					else {
+						savedColor = linkedRoad.getNegetiveColor();
+						if (savedColor != Road.DANGER_COLOR) {
+							continue;
+						}
+						else if (savedColor == Road.SEARCHING_COLOR) {
+							return;
+						}
+						linkedRoad.setNegetiveColor(Road.SEARCHING_COLOR);
+						dfsForRotate(linkedRoad.beginCross);
+						linkedRoad.setNegetiveColor(savedColor);
+					}
+				}
+			}
+		}
+		public void colorAllRoads() {
+			for (Integer key : roads.keySet()) {
+				Road road = roads.get(key);
+				road.setPositiveColor(Road.SAFE_COLOR);
+				for (int i = 0; i < road.laneNum; ++i) {
+					if (road.roadStatus.get(i) == null || road.roadStatus.get(i).isEmpty()) {
+						continue;
+					}
+					else if (road.roadStatus.get(i).getLast().status.isTermination == false) {
+						road.setPositiveColor(Road.DANGER_COLOR);
+						break;
+					}
+				}
+				if (road.isDouble == 1) {
+					road.setNegetiveColor(Road.SAFE_COLOR);
+					for (int i = road.laneNum; i < road.laneNum * 2; ++i) {
+						if (road.roadStatus.get(i) == null || road.roadStatus.get(i).isEmpty()) {
+							continue;
+						}
+						else if (road.roadStatus.get(i).getLast().status.isTermination == false) {
+							road.setNegetiveColor(Road.DANGER_COLOR);
+							break;
+						}
+					}
+				}
+			}
+			cleanLastdfs();
+			for (Integer key: crosses.keySet()) {				
+				dfsForRotate(crosses.get(key));
+			}
+		}
 		public void output(String filename) throws IOException {
 			PrintStream bw = new PrintStream(new File(filename));
 			for (Integer key : cars.keySet()) {

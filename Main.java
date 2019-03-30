@@ -7,7 +7,7 @@ import com.huawei.Map.DeadLockException;
 public class Main {
     public static void main(String[] args) throws IOException, DeadLockException
     {
-    	 Map map = new Map("cross.txt","road.txt","car.txt","answer.txt");
+    	 Map map = new Map("map/cross.txt","map/road.txt","map/car.txt","map/answer.txt");
          System.out.println(map.run());
          map.algorithm.output("answer.txt");
     }
