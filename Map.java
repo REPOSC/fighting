@@ -76,9 +76,6 @@ class Map {
 //			}
 //			System.out.println();
 			this.time++;
-			if (time == 1000) {
-				break;
-			}
 		}
 		System.out.println("调度结束时间为： " + time);
 		int ans = 0;
@@ -294,7 +291,7 @@ class Map {
 				this.firstTimeMarkSingleLane(tempLane);
 			}
 		}
-		System.out.println(Map.waitCarNum);
+//		System.out.println(Map.waitCarNum);
 	}
 
 	// 标记后处理每一个路口
@@ -416,7 +413,7 @@ class Map {
 		int length = this.notMoved.size();
 		for (int i = 0; i < length; i++) {
 			int nowOnRoadCarNum = carTotal - arrived.size() - notMoved.size();
-			if (nowOnRoadCarNum >= totalRoadRoom * 0.5) {
+			if (nowOnRoadCarNum >= totalRoadRoom * 0.3) {
 				return true;
 			}
 			Car tempCar = this.notMoved.get(i);
@@ -485,6 +482,12 @@ class Map {
 				}
 				visited.put(minCross, true);
 				for (Cross cross2 : CrossGraph.get(minCross).keySet()) {
+					if (!CrossGraph.get(minCross).containsKey(cross2)) {
+						System.out.println("notcontain");
+					}
+					if (CrossGraph.get(minCross).get(cross2) == null) {
+						System.out.println("null");
+					}
 					if (CrossGraph.get(minCross).get(cross2) != Integer.MAX_VALUE
 							&& mindistances.get(minCross) != Integer.MAX_VALUE && CrossGraph.get(minCross).get(cross2)
 									+ mindistances.get(minCross) < mindistances.get(cross2)) {
@@ -525,7 +528,7 @@ class Map {
 			CrossGraph = new HashMap<>();
 			for (Integer key : crosses.keySet()) {
 				Cross nowCross = crosses.get(key);
-				for (Road nowRoad : nowCross.originCrossRoads) {
+				for (Road nowRoad : nowCross.originCrossRoads) {					
 					if (nowRoad.endCross != null) {
 						if (nowRoad.isDouble == 1) {
 							Cross nowCross1 = nowRoad.beginCross;
@@ -538,6 +541,7 @@ class Map {
 								CrossGraph.put(nowCross1, nextCrossInfo);
 							}
 
+							
 							if (CrossGraph.containsKey(nowCross2)) {
 								CrossGraph.get(nowCross2).put(nowCross1, getLength(nowRoad, nowCross2));
 							} else {
@@ -548,7 +552,7 @@ class Map {
 						} else {
 							if (nowRoad.beginCross.id == nowCross.id) {
 								Cross nowCross2 = nowRoad.endCross;
-								if (CrossGraph.containsKey(nowCross2)) {
+								if (CrossGraph.containsKey(nowCross)) {
 									CrossGraph.get(nowCross).put(nowCross2, getLength(nowRoad, nowCross));
 								} else {
 									HashMap<Cross, Integer> nextCrossInfo = new HashMap<>();
@@ -558,10 +562,10 @@ class Map {
 							}
 						}
 					}
+					
 				}
 			}
 		}
-
 		public Algorithm() {
 			bufferroads();
 			initgraph();
