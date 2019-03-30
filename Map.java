@@ -34,20 +34,22 @@ class Map {
 
 	// 运行
 	public int run() throws FileNotFoundException, DeadLockException {
-		try {
-			System.setOut(new PrintStream(new File("debug.txt")));
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			System.setOut(new PrintStream(new File("debug.txt")));
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		this.moveCarsInRoom();
 		this.time++;
 		boolean stillRoom = true;
 //        System.setOut(new PrintStream(new File("debug.csv")));
 		while (this.arrived.size() < this.carTotal) {
 //          System.out.println(time);
-//          System.out.println("time "+this.time + " "+this.arrived.size());
+			System.out.println(
+					"time " + this.time + " " + this.arrived.size() + " " + this.notMoved.size() + " " + carTotal);
 			this.markCars();
+//			System.out.println("1");
 //			for(int tempCar:sortIndex(this.cars.keySet())) {
 //				System.out.println(tempCar+" "+cars.get(tempCar));
 //			}
@@ -57,15 +59,26 @@ class Map {
 //				System.out.println(tempCar+" "+cars.get(tempCar));
 //			}
 //			System.out.println();
+
 			if (stillRoom) {
 				stillRoom = this.moveCarsInRoom();
 			}
+//			System.out.println("2");
 			this.moveCarsInRoom();
+//			if(time>477) {
+//				for(int tempCar:sortIndex(this.cars.keySet())) {
+//					System.out.println(tempCar+" "+cars.get(tempCar));
+//				}
+//				System.out.println();
+//			}
 //			for(int tempCar:sortIndex(this.cars.keySet())) {
 //				System.out.println(tempCar+" "+cars.get(tempCar));
 //			}
 //			System.out.println();
 			this.time++;
+			if (time == 1000) {
+				break;
+			}
 		}
 		System.out.println("调度结束时间为： " + time);
 		int ans = 0;
@@ -218,7 +231,6 @@ class Map {
 	// 如果第一辆车不能走，那么先在passcross返回false之前手动把他变成terminal，然后remarkterminal
 	// 当一辆车走过去之后，marksingleline一次
 
-	
 	// OK
 	// 对某一条车道进行标记，其中的firstcar是不准确的
 	public void markSingleLane(ArrayDeque<Car> tempLane) {
@@ -236,17 +248,40 @@ class Map {
 				}
 			} else {
 				tempCar = iter.next();
-				tempCar.markFollowCar(frontCar);
+				if(!tempCar.markFollowCar(frontCar)) {
+					break;
+				}
 				frontCar = tempCar;
 			}
 		}
 	}
 
+	public void firstTimeMarkSingleLane(ArrayDeque<Car> tempLane) {
+		Iterator<Car> iter = tempLane.iterator();
+		Car frontCar = null, tempCar;
+		boolean count = true;
+		while (iter.hasNext()) {
+			if (count) {
+				frontCar = iter.next();
+				if (frontCar.firstTimeMarkFirstCar()) {
+					count = false;
+				} else {
+					this.arrived.add(frontCar);
+					frontCar.arrivedTime = this.time + 1;
+				}
+			} else {
+				tempCar = iter.next();
+				tempCar.firstTimeMarkFollowCar(frontCar);
+				frontCar = tempCar;
+			}
+		}
+	}
 
 	// OK
 	// 首先处理每条道路，对车辆进行标记
 	public void markCars() {
-		Map.waitCarNum = this.carTotal - this.notMoved.size() - this.arrived.size();
+//		Map.waitCarNum = this.carTotal - this.notMoved.size() - this.arrived.size();
+		Map.waitCarNum = 0;
 		for (int i : sortIndex(this.roads.keySet())) {
 			Road nowRoad = this.roads.get(i);
 			if (nowRoad.carNum == 0) {
@@ -256,9 +291,10 @@ class Map {
 				if (tempLane.size() == 0) {
 					continue;
 				}
-				this.markSingleLane(tempLane);
+				this.firstTimeMarkSingleLane(tempLane);
 			}
 		}
+		System.out.println(Map.waitCarNum);
 	}
 
 	// 标记后处理每一个路口
@@ -270,7 +306,10 @@ class Map {
 		boolean judge;
 		int lastWaitCarNum = 0;
 		boolean haveDeadLock = false;
+//		boolean tempCrossOver = false;
+		int count = 0;
 		while (Map.waitCarNum > 0) {
+			count++;
 			if (lastWaitCarNum == Map.waitCarNum) {
 				haveDeadLock = true;
 				break;
@@ -283,22 +322,26 @@ class Map {
 				boolean[] roadFinished = { false, false, false, false };
 				boolean canLeft, canRight;
 				while (judge) {
+//					System.out.println("      +++"+Map.waitCarNum);
 					judge = false;
 					for (roadIndex = 4 - nowCross.roadNum; roadIndex < 4; roadIndex++) {
+//						System.out.println("22");
 						if (roadFinished[roadIndex]) {
 							continue;
 						}
 						tempRoad = nowCross.sortedCrossRoads.get(roadIndex);
-						
+
 						tempCar = tempRoad.getNextCar(nowCross);
 						canLeft = false;
 						canRight = false;
 						boolean finishThisRoad = true;
 						int canPassCross;
 						while (tempCar != null) {
+
+//							System.out.println(Map.waitCarNum);
+//							System.out.println("         ==="+Map.waitCarNum);
 							finishThisRoad = false;
 							tempLaneNum = tempCar.status.laneNum;
-							judge = true;
 							if (tempCar.status.actCross == 'l') {
 								if (!canLeft) {
 									Car otherCar = nowCross.getNextRoadDirect(tempRoad, 1).getNextCar(nowCross);
@@ -321,13 +364,20 @@ class Map {
 								canRight = true;
 							}
 							canPassCross = tempCar.passCross(nowCross);
-							if (canPassCross==1) {
+							if (canPassCross == 1) {
+								judge = true;
 								markSingleLane(tempRoad.roadStatus.get(tempLaneNum));
 								algorithm.UpdateGraph(tempCar);
+//								System.out.println("      +++111");
 							} else if (canPassCross == -1) {
+								judge = true;
 								Car.reMarkTerminal(tempRoad.roadStatus.get(tempLaneNum));
+
+//								System.out.println("      +++222");
 							} else {
 								finishThisRoad = true;
+
+//								System.out.println("      +++333");
 								break;
 							}
 							tempCar = tempRoad.getNextCar(nowCross);
@@ -339,8 +389,10 @@ class Map {
 					}
 
 				}
+
 			}
 		}
+//		System.out.println(count);
 		if (haveDeadLock) {
 			throw new DeadLockException();
 		}
@@ -666,7 +718,7 @@ class Map {
 
 		public void UpdateGraph(Car car) {
 			PairCross pair = new PairCross();
-			Cross justPassedCross,nextCross;
+			Cross justPassedCross, nextCross;
 			Road nowRoad = car.ansRoads.get(car.status.nowRoadIndex);
 			if (car.status.laneNum < nowRoad.laneNum) {
 				pair.begin = nowRoad.beginCross;
@@ -680,16 +732,16 @@ class Map {
 				nextCross = nowRoad.beginCross;
 			}
 			CrossGraph.get(pair.begin).put(pair.end, nowRoad.getVirtualLength(nextCross));
-			Road formerRoad = car.ansRoads.get(car.status.nowRoadIndex-1);
+			Road formerRoad = car.ansRoads.get(car.status.nowRoadIndex - 1);
 			if (justPassedCross.id == formerRoad.beginCross.id) {
-				pair.begin = formerRoad.beginCross;
-				pair.end = formerRoad.endCross;
-			} else {
 				pair.begin = formerRoad.endCross;
 				pair.end = formerRoad.beginCross;
+			} else {
+				pair.begin = formerRoad.beginCross;
+				pair.end = formerRoad.endCross;
 			}
 			CrossGraph.get(pair.begin).put(pair.end, formerRoad.getVirtualLength(justPassedCross));
-			
+
 //			if (car.status.nowRoadIndex >= car.ansRoads.size()) {
 //				return;
 //			}

@@ -63,7 +63,7 @@ class Road {
 		int i;
 		for(i=base;i<base+this.laneNum;i++) {
 			laneCarNum = this.roadStatus.get(i).size();
-			if(laneCarNum != length) {
+			if(laneCarNum!=0 && this.roadStatus.get(i).getLast().status.location != 1) {
                 if (this.roadStatus.get(i).size() == 0){
                     lastCarPosition = length;
                     lastCarSpeed = this.speedLimit;
@@ -123,7 +123,7 @@ class Road {
 								map.algorithm.OperateTheCar(tempCar);
 								tempCar.status.hasPlan = true;
 								
-								System.out.println(tempCar.id+" "+tempCar.speedLimit+" "+tempCar.ansRoads.size()+" "+tempCar.ansRoads+" "+tempCar.status.nextRoadIndex+" "+tempCar.ansRoads.get(tempCar.status.nextRoadIndex));
+								//System.out.println(tempCar.id+" "+tempCar.speedLimit+" "+tempCar.ansRoads.size()+" "+tempCar.ansRoads+" "+tempCar.status.nextRoadIndex+" "+tempCar.ansRoads.get(tempCar.status.nextRoadIndex));
 								tempCar.status.nextSpeed = Math.min(tempCar.speedLimit,tempCar.ansRoads.get(tempCar.status.nextRoadIndex).speedLimit);
 								tempCar.status.actCross = nowCross.nextDirection(tempCar.ansRoads.get(tempCar.status.nowRoadIndex).id, tempCar.ansRoads.get(tempCar.status.nextRoadIndex).id);
 							}
